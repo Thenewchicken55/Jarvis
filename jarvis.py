@@ -49,7 +49,7 @@ class Jarvis:
         clean_response = self.kb.execute_response(response)
 
         if self.tts._engine_type != "none":
-            threading.Thread(target=self.tts.speak, args=(clean_response,), daemon=True).start()
+            self.tts.speak(clean_response)
 
     def on_press(self, e):
         if not self.is_recording:

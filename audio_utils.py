@@ -1,9 +1,10 @@
 import io
 import wave
 import yaml
-import tempfile
 import queue
 import threading
+import subprocess
+import sys
 import sounddevice as sd
 import numpy as np
 
@@ -20,7 +21,6 @@ def record_audio(duration=None, fs=SAMPLE_RATE):
         recording = sd.rec(int(duration * fs), samplerate=fs, channels=CHANNELS, dtype=DTYPE)
         sd.wait()
     else:
-        sd.wait()
         recording = sd.rec(int(10 * fs), samplerate=fs, channels=CHANNELS, dtype=DTYPE)
         sd.wait()
     return recording.flatten()
@@ -96,8 +96,9 @@ class TextToSpeech:
         self._queue = queue.Queue()
         self._engine_type = "none"
         self._init_engine()
-        self._worker = threading.Thread(target=self._worker_loop, daemon=True)
-        self._worker.start()
+        if self._engine_type != "none":
+            self._worker = threading.Thread(target=self._worker_loop, daemon=True)
+            self._worker.start()
 
     def _init_engine(self):
         engine = config["voice"]["tts_engine"]
@@ -107,32 +108,60 @@ class TextToSpeech:
                 self._engine_type = "edge_tts"
                 return
             except ImportError:
-                print("edge_tts not installed. Trying pyttsx3.")
+                pass
+
+        if sys.platform == "win32":
+            try:
+                subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "Add-Type -AssemblyName System.Speech; exit 0"],
+                    capture_output=True, timeout=10,
+                )
+                self._engine_type = "powershell"
+                return
+            except Exception:
+                pass
+
         try:
             import pyttsx3
+            pyttsx3.init()
             self._engine_type = "pyttsx3"
-        except ImportError:
-            print("pyttsx3 not installed either. Text-to-speech disabled.")
+        except Exception:
+            print("No TTS engine available. Text-to-speech disabled.")
 
     def _worker_loop(self):
-        if self._engine_type == "pyttsx3":
+        if self._engine_type == "powershell":
             while True:
                 text = self._queue.get()
                 if text is None:
                     break
-                import pyttsx3
                 try:
+                    escaped = text.replace("'", "''")
+                    ps = (
+                        "Add-Type -AssemblyName System.Speech; "
+                        "$s=New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+                        f"$s.Speak('{escaped}')"
+                    )
+                    subprocess.run(
+                        ["powershell", "-NoProfile", "-Command", ps],
+                        capture_output=True, timeout=60,
+                    )
+                except Exception as e:
+                    print(f"TTS PowerShell error: {e}")
+
+        elif self._engine_type == "pyttsx3":
+            while True:
+                text = self._queue.get()
+                if text is None:
+                    break
+                try:
+                    import pyttsx3
                     engine = pyttsx3.init()
                     engine.say(text)
                     engine.runAndWait()
                 except Exception as e:
-                    print(f"TTS error, retrying: {e}")
-                    try:
-                        engine = pyttsx3.init()
-                        engine.say(text)
-                        engine.runAndWait()
-                    except Exception as e2:
-                        print(f"TTS failed: {e2}")
+                    print(f"TTS pyttsx3 error: {e}")
+
         elif self._engine_type == "edge_tts":
             while True:
                 text = self._queue.get()
@@ -141,6 +170,7 @@ class TextToSpeech:
                 self._speak_edge_tts(text)
 
     def speak(self, text):
+        print(f"TTS speak() called, engine={self._engine_type}, text='{text[:60]}...'")
         if self._engine_type != "none":
             self._queue.put(text)
 
