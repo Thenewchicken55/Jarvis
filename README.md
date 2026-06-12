@@ -61,6 +61,20 @@ Push-to-talk: Hold the **Spacebar**, speak your command, release. Jarvis will pr
 streamlit run app.py
 ```
 
+### Keyboard Control
+
+Jarvis can type on your keyboard or press key combos. Just ask:
+
+| Say this | What happens |
+|---|---|
+| "Type hello world" | Jarvis types "hello world" wherever your cursor is |
+| "Press ctrl+c" | Jarvis presses Ctrl+C |
+| "Type an email saying I'm running late, meeting at 3" | Jarvis types the full message |
+| "Open notepad and write a shopping list" | Jarvis switches to Notepad and types the list |
+| "Press enter" | Jarvis presses the Enter key |
+
+Jarvis uses `[TYPE]` and `[KEY]` markers in its responses to trigger keyboard actions — the marker text is stripped before speaking, so you only hear the natural response while the typing happens silently.
+
 ## Configuration
 
 Edit `config.yaml` to customize:
