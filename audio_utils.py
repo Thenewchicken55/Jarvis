@@ -2,6 +2,7 @@ import io
 import wave
 import yaml
 import tempfile
+import threading
 import sounddevice as sd
 import numpy as np
 
@@ -91,6 +92,7 @@ class SpeechToText:
 
 class TextToSpeech:
     def __init__(self):
+        self._lock = threading.Lock()
         engine = config["voice"]["tts_engine"]
         if engine == "edge_tts":
             self._init_edge_tts()
@@ -121,8 +123,9 @@ class TextToSpeech:
             self._speak_edge_tts(text)
 
     def _speak_pyttsx3(self, text):
-        self.engine_tts.say(text)
-        self.engine_tts.runAndWait()
+        with self._lock:
+            self.engine_tts.say(text)
+            self.engine_tts.runAndWait()
 
     def _speak_edge_tts(self, text):
         import asyncio
