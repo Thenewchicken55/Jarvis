@@ -2,6 +2,7 @@ import io
 import wave
 import yaml
 import tempfile
+import queue
 import threading
 import sounddevice as sd
 import numpy as np
@@ -92,40 +93,47 @@ class SpeechToText:
 
 class TextToSpeech:
     def __init__(self):
-        self._lock = threading.Lock()
+        self._queue = queue.Queue()
+        self._engine_type = "none"
+        self._init_engine()
+        self._worker = threading.Thread(target=self._worker_loop, daemon=True)
+        self._worker.start()
+
+    def _init_engine(self):
         engine = config["voice"]["tts_engine"]
         if engine == "edge_tts":
-            self._init_edge_tts()
-        else:
-            self._init_pyttsx3()
-
-    def _init_pyttsx3(self):
+            try:
+                import edge_tts
+                self._engine_type = "edge_tts"
+                return
+            except ImportError:
+                print("edge_tts not installed. Trying pyttsx3.")
         try:
             import pyttsx3
-            self.engine_tts = pyttsx3.init()
-            self.engine = "pyttsx3"
+            self._engine_type = "pyttsx3"
         except ImportError:
-            print("pyttsx3 not installed. Falling back to edge_tts.")
-            self._init_edge_tts()
+            print("pyttsx3 not installed either. Text-to-speech disabled.")
 
-    def _init_edge_tts(self):
-        try:
-            import edge_tts
-            self.engine = "edge_tts"
-        except ImportError:
-            print("edge_tts not installed either. Text-to-speech disabled.")
-            self.engine = "none"
+    def _worker_loop(self):
+        if self._engine_type == "pyttsx3":
+            import pyttsx3
+            engine = pyttsx3.init()
+            while True:
+                text = self._queue.get()
+                if text is None:
+                    break
+                engine.say(text)
+                engine.runAndWait()
+        elif self._engine_type == "edge_tts":
+            while True:
+                text = self._queue.get()
+                if text is None:
+                    break
+                self._speak_edge_tts(text)
 
     def speak(self, text):
-        if self.engine == "pyttsx3":
-            self._speak_pyttsx3(text)
-        elif self.engine == "edge_tts":
-            self._speak_edge_tts(text)
-
-    def _speak_pyttsx3(self, text):
-        with self._lock:
-            self.engine_tts.say(text)
-            self.engine_tts.runAndWait()
+        if self._engine_type != "none":
+            self._queue.put(text)
 
     def _speak_edge_tts(self, text):
         import asyncio
