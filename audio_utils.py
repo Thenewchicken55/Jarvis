@@ -116,14 +116,23 @@ class TextToSpeech:
 
     def _worker_loop(self):
         if self._engine_type == "pyttsx3":
-            import pyttsx3
-            engine = pyttsx3.init()
             while True:
                 text = self._queue.get()
                 if text is None:
                     break
-                engine.say(text)
-                engine.runAndWait()
+                import pyttsx3
+                try:
+                    engine = pyttsx3.init()
+                    engine.say(text)
+                    engine.runAndWait()
+                except Exception as e:
+                    print(f"TTS error, retrying: {e}")
+                    try:
+                        engine = pyttsx3.init()
+                        engine.say(text)
+                        engine.runAndWait()
+                    except Exception as e2:
+                        print(f"TTS failed: {e2}")
         elif self._engine_type == "edge_tts":
             while True:
                 text = self._queue.get()
