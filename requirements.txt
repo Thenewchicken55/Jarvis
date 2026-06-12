@@ -1,10 +1,29 @@
-streamlit-mic-recorder
-InstructorEmbedding
-ctransformers
-transformers
-langchain
-streamlit
-pypdfium2
-librosa
-pyyaml
+# Core
+streamlit>=1.28.0
+pyyaml>=6.0
+requests>=2.31.0
+sounddevice>=0.4.6
+numpy>=1.24.0
+keyboard>=0.13.5
+pyautogui>=0.9.54
 
+# Speech-to-Text (at least one)
+speechrecognition>=3.10.0
+
+# Text-to-Speech (at least one)
+pyttsx3>=2.90
+
+# Optional: OpenAI support
+# openai>=1.0.0
+
+# Optional: Anthropic support
+# anthropic>=0.30.0
+
+# Optional: Local STT with Whisper
+# faster-whisper>=1.0.0
+
+# Optional: Better TTS with edge-tts
+# edge-tts>=6.1.0
+
+# Optional: Local GGUF models
+# ctransformers>=0.2.27
