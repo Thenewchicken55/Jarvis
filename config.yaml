@@ -1,12 +1,38 @@
-model_path:
-   small: "chat_ven/models/mistral-7b-instruct-v0.1.Q3_K_M.gguf"
-   large: "chat_venv/models/mistral-7b-instruct-v0.1.Q5_K_M.gguf"
+llm:
+  # Supported providers: ollama, openai, anthropic, local
+  provider: "ollama"
 
-model_type: "mistral"
+  ollama:
+    model: "llama3.2"
+    base_url: "http://localhost:11434"
+    temperature: 0.7
+    max_tokens: 2048
 
-embeddings_path: "BAAI/bge-large-en-v1.5"
+  openai:
+    model: "gpt-4o"
+    api_key: ""            # Or set OPENAI_API_KEY env var
+    temperature: 0.7
+    max_tokens: 2048
 
+  anthropic:
+    model: "claude-sonnet-4-20250514"
+    api_key: ""            # Or set ANTHROPIC_API_KEY env var
+    temperature: 0.7
+    max_tokens: 2048
 
-# model_config: {'max_new_tokens': 512, 'temperature' : 0, 'content_length' : 4096, 'gpu_layers' : 0}
-model_config: {'max_new_tokens': 512, 'temperature' : 0, 'gpu_layers' : 0}
+  local:
+    model_path: ""
+    model_type: "mistral"
+    gpu_layers: 0
+    temperature: 0.7
+    max_tokens: 2048
 
+voice:
+  stt_engine: "speech_recognition"  # speech_recognition, whisper
+  tts_engine: "pyttsx3"            # pyttsx3, edge_tts
+  language: "en-US"
+  push_to_talk_key: "space"
+
+keyboard:
+  enabled: true
+  typing_speed: 0.05
