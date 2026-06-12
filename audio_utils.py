@@ -170,7 +170,6 @@ class TextToSpeech:
                 self._speak_edge_tts(text)
 
     def speak(self, text):
-        print(f"TTS speak() called, engine={self._engine_type}, text='{text[:60]}...'")
         if self._engine_type != "none":
             self._queue.put(text)
 
