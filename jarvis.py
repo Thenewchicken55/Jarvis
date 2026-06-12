@@ -48,7 +48,7 @@ class Jarvis:
 
         clean_response = self.kb.execute_response(response)
 
-        if self.tts.engine != "none":
+        if self.tts._engine_type != "none":
             threading.Thread(target=self.tts.speak, args=(clean_response,), daemon=True).start()
 
     def on_press(self, e):
