@@ -1,0 +1,38 @@
+name: Build EXE
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller
+          pip install -r requirements.txt
+          pip install pyttsx3 SpeechRecognition
+
+      - name: Build EXE
+        run: pyinstaller --onefile --name Jarvis --add-data "config.yaml;." --hidden-import pyttsx3 --hidden-import speech_recognition jarvis.py
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-Windows-x64
+          path: dist/Jarvis.exe
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Jarvis.exe
+          generate_release_notes: true
